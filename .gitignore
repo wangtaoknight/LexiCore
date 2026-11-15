@@ -1,0 +1,32 @@
+# ---------- 依赖与构建产物 ----------
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# ---------- 本地数据（SQLite 数据库、WAL、自动备份、加密密钥） ----------
+# 包含 data/app.db、data/secret.key、data/backups/*.db
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# ---------- 环境变量与凭据 ----------
+.env
+.env.*
+!.env.example
+# .npmrc 可能包含 registry 认证 token，不要提交
+.npmrc
+
+# ---------- 日志与临时文件 ----------
+*.log
+npm-debug.log*
+*.tmp
+
+# ---------- 编辑器与操作系统 ----------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
