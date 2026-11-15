@@ -42,7 +42,12 @@ function rowToWord(row: WordRow): Word {
 
 /** 只接受英文字母、连字符、空格、撇号 */
 export function normalizeLemma(input: string): string {
-  const lemma = input.trim().toLowerCase().replace(/\s+/g, ' ');
+  const lemma = input
+    .trim()
+    .toLowerCase()
+    .replace(/[\u2018\u2019\u02bc]/g, "'")
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/\s+/g, ' ');
   if (!lemma) throw badRequest('请输入英文单词');
   if (lemma.length > 60) throw badRequest('单词过长（最多 60 个字符）');
   if (!/^[a-z][a-z' -]*$/.test(lemma)) {

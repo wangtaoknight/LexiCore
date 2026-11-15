@@ -63,6 +63,23 @@ wordsRouter.post(
   }),
 );
 
+wordsRouter.get('/words/lookup', (req, res) => {
+  const raw = typeof req.query.word === 'string' ? req.query.word : '';
+  try {
+    const lemma = normalizeLemma(raw);
+    const existing = findWordByLemma(lemma);
+    res.json({
+      valid: true,
+      word: lemma,
+      existing: existing
+        ? { id: existing.id, lemma: existing.lemma, status: existing.status }
+        : null,
+    });
+  } catch {
+    res.json({ valid: false, word: raw.trim(), existing: null });
+  }
+});
+
 wordsRouter.get('/words/:id', (req, res) => {
   const word = getWord(req.params.id);
   res.json({

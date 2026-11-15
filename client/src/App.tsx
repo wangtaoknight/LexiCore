@@ -1,10 +1,13 @@
-import { Link, NavLink, Route, Routes } from 'react-router-dom';
+import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import HomePage from './pages/Home';
 import WordDetailPage from './pages/WordDetail';
 import ReviewPage from './pages/Review';
 import SettingsPage from './pages/Settings';
 
 export default function App() {
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -15,6 +18,11 @@ export default function App() {
             {/* <div className="brand-subtitle">词义 ·  边界</div> */}
           </div>
         </Link>
+        {isHome && (
+          <p className="topbar-tagline">
+            输入一个英文单词，先由 AI 辅助梳理义项清单；针对每个义项，由人工逐条审核后进入知识库。
+          </p>
+        )}
         <nav className="nav">
           <NavLink to="/" end>
             单词

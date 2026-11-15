@@ -2,22 +2,22 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, errorMessage } from '../api/client';
 import type { Word, WordListResponse } from '../api/types';
+import { Modal } from '../components/Modal';
+import { fuzzyBestMatch } from '../ui/fuzzy';
 
 type Filter = 'pending' | 'all' | 'approved';
+
+type LookupResponse = {
+  valid: boolean;
+  word: string;
+  existing: { id: string; lemma: string; status: string } | null;
+};
 
 function SearchIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
       <path d="m20 20-3.2-3.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ChevronIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -29,6 +29,8 @@ export default function HomePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>('pending');
+  const [pendingWord, setPendingWord] = useState<string | null>(null);
+  const [hintDismissed, setHintDismissed] = useState(false);
 
   const refresh = useCallback(async () => {
     const next = await api.get<WordListResponse>('/words');
@@ -39,6 +41,13 @@ export default function HomePage() {
     refresh().catch((err) => setError(errorMessage(err)));
   }, [refresh]);
 
+  async function createAndGo(lemma: string) {
+    const result = await api.post<{ word: Word; hasOverview: boolean }>('/words', { word: lemma });
+    setInput('');
+    setPendingWord(null);
+    navigate(`/words/${result.word.id}`);
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     const word = input.trim();
@@ -46,9 +55,32 @@ export default function HomePage() {
     setSubmitting(true);
     setError(null);
     try {
-      const result = await api.post<{ word: Word; hasOverview: boolean }>('/words', { word });
-      setInput('');
-      navigate(`/words/${result.word.id}`);
+      const lookup = await api.get<LookupResponse>(
+        `/words/lookup?word=${encodeURIComponent(word)}`,
+      );
+      if (!lookup.valid) {
+        setError('请输入合法的英文单词（只能包含字母、空格、连字符或撇号）');
+        return;
+      }
+      if (lookup.existing) {
+        setInput('');
+        navigate(`/words/${lookup.existing.id}`);
+        return;
+      }
+      setPendingWord(lookup.word);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function confirmCreate() {
+    if (!pendingWord) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await createAndGo(pendingWord);
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -75,6 +107,19 @@ export default function HomePage() {
     [words],
   );
 
+  // 输入 ≥2 个字符时，在词库中找唯一最佳匹配（含拼写容错）
+  const suggestion = useMemo(() => {
+    const query = input.trim();
+    if (hintDismissed || query.length < 2) return null;
+    const match = fuzzyBestMatch(
+      query,
+      words.map((word) => word.lemma),
+    );
+    if (!match) return null;
+    const word = words.find((entry) => entry.lemma === match.lemma);
+    return word ? { match, word } : null;
+  }, [input, words, hintDismissed]);
+
   const visible =
     filter === 'pending' ? pendingWords : filter === 'approved' ? approvedWords : words;
 
@@ -93,15 +138,6 @@ export default function HomePage() {
 
   return (
     <div className="page home-page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">单词研究</h1>
-          <p className="page-desc">
-            输入一个英文单词，先由 AI 辅助梳理义项清单；针对每个义项，由人工逐条审核后进入知识库。
-          </p>
-        </div>
-      </div>
-
       <section className="hero-search">
         <form className="search-form" onSubmit={handleSubmit}>
           <div className="search-field">
@@ -111,7 +147,14 @@ export default function HomePage() {
             <input
               className="search-input"
               value={input}
-              onChange={(event) => setInput(event.target.value)}
+              onChange={(event) => {
+                setInput(event.target.value);
+                setHintDismissed(false);
+                if (error) setError(null);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') setHintDismissed(true);
+              }}
               placeholder="输入英文单词，例如 ambition"
               autoFocus
             />
@@ -125,9 +168,32 @@ export default function HomePage() {
             {!submitting && <span aria-hidden="true">→</span>}
           </button>
         </form>
-        <p className="search-hint">
+        {suggestion && (
+          <button
+            type="button"
+            className={`match-card ${suggestion.match.kind}`}
+            onClick={() => navigate(`/words/${suggestion.word.id}`)}
+          >
+            <span className="match-tag">
+              {suggestion.match.kind === 'exact'
+                ? '词库中已有'
+                : suggestion.match.kind === 'strong'
+                  ? '最接近'
+                  : '是否想找'}
+            </span>
+            <span className="match-lemma">{suggestion.word.lemma}</span>
+            {suggestion.word.phonetic && (
+              <span className="match-phonetic mono">{suggestion.word.phonetic}</span>
+            )}
+            {suggestion.word.senses[0] && (
+              <span className="match-gloss">{suggestion.word.senses[0].cnGloss}</span>
+            )}
+            <span className="match-go">进入 →</span>
+          </button>
+        )}
+        {/* <p className="search-hint">
           AI 生成的内容会先进入待审核状态，只有你逐条通过后才会进入正式知识库。
-        </p>
+        </p> */}
         {error && (
           <div className="notice notice-error" style={{ marginTop: 10 }}>
             {error}
@@ -135,99 +201,141 @@ export default function HomePage() {
         )}
       </section>
 
-      <section className="filter-cards" aria-label="单词列表筛选">
-        {filterCards.map((card) => (
-          <button
-            key={card.key}
-            type="button"
-            className={`filter-card tone-${card.key} ${filter === card.key ? 'active' : ''}`}
-            aria-pressed={filter === card.key}
-            onClick={() => setFilter(card.key)}
-          >
-            <span className="filter-top">
-              <span className="filter-title">{card.title}</span>
-              <ChevronIcon />
-            </span>
-            <span className="filter-value">{card.value}</span>
-            <span className="filter-hint">{card.hint}</span>
-          </button>
-        ))}
-      </section>
-
-      <section className={`card word-table-card tone-${filter}`}>
-        <div className="card-header">
-          <div>
-            <h2 className="card-title">
-              {filter === 'pending' ? '待审核单词' : filter === 'approved' ? '已通过单词' : '全部单词'}
-            </h2>
-            <p className="card-subtitle">
-              {filter === 'pending'
-                ? '尚未全部通过审核的单词，已生成义项的排在前面'
-                : filter === 'approved'
-                  ? '全部内容都已通过审核的单词'
-                  : `版本库中的全部单词${queuedCount > 0 ? `（其中 ${queuedCount} 个待生成概览）` : ''}`}
+      <section className={`word-panel tone-${filter}`} aria-label="单词库">
+        <div className="word-panel-top">
+          <div className="panel-heading">
+            <h2 className="panel-title">单词库</h2>
+            <p className="panel-subtitle">
+              共 {words.length} 个单词 · 已全部通过 {approvedWords.length} 个
             </p>
           </div>
-          <span className="badge badge-neutral">{visible.length} 个单词</span>
+          <div className="stat-strip" role="tablist" aria-label="按审核状态筛选">
+            {filterCards.map((card) => (
+              <button
+                key={card.key}
+                type="button"
+                role="tab"
+                aria-selected={filter === card.key}
+                title={card.hint}
+                className={`stat-seg tone-${card.key} ${filter === card.key ? 'active' : ''}`}
+                onClick={() => setFilter(card.key)}
+              >
+                <span className="seg-value">{card.value}</span>
+                <span className="seg-label">{card.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="panel-toolbar">
+          <div className="toolbar-left">
+            <span className={`toolbar-dot tone-${filter}`} />
+            <span className="toolbar-title">
+              {filter === 'pending' ? '待审核单词' : filter === 'approved' ? '已通过单词' : '全部单词'}
+            </span>
+            <span className="toolbar-count">{visible.length}</span>
+          </div>
+          <span className="toolbar-hint">
+            {filter === 'pending'
+              ? '尚未全部通过，已生成义项的排在前面'
+              : filter === 'approved'
+                ? '全部内容都已通过审核'
+                : queuedCount > 0
+                  ? `其中 ${queuedCount} 个待生成概览`
+                  : '按最近更新排序'}
+          </span>
         </div>
 
         {visible.length === 0 ? (
           <div className="empty">{emptyText}</div>
         ) : (
-          <table className="table word-table">
-            <thead>
-              <tr>
-                <th className="col-idx" scope="col" aria-label="序号" />
-                <th>单词</th>
-                <th>音标</th>
-                <th>词性</th>
-                <th>义项</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map((word, index) => (
-                <tr
-                  key={word.id}
-                  className={word.status === 'queued' ? 'row-queued' : undefined}
-                  onClick={() => navigate(`/words/${word.id}`)}
-                >
-                  <td className="col-idx">{index + 1}</td>
-                  <td>
-                    <span className="word-lemma">{word.lemma}</span>
-                    {word.status === 'queued' && <span className="badge badge-neutral">待生成</span>}
-                  </td>
-                  <td className="mono muted small">{word.phonetic || '—'}</td>
-                  <td>
-                    {word.pos.length > 0 ? (
-                      word.pos.map((pos, posIndex) => (
-                        <span className="pos-chip" key={`${pos}-${posIndex}`}>
-                          {pos}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="muted">—</span>
-                    )}
-                  </td>
-                  <td className="sense-cell">
-                    {word.senses.length === 0 ? (
-                      <span className="muted small">尚未生成义项</span>
-                    ) : (
-                      <span className="sense-line">
-                        {word.senses.map((sense, senseIndex) => (
-                          <span key={`${sense.senseNo}-${senseIndex}`}>
-                            {sense.senseNo}. {sense.cnGloss}
-                            {senseIndex < word.senses.length - 1 ? '；' : ''}
-                          </span>
-                        ))}
-                      </span>
-                    )}
-                  </td>
+          <div className="table-wrap">
+            <table className="modern-table">
+              <thead>
+                <tr>
+                  <th className="col-idx" scope="col" aria-label="序号" />
+                  <th>单词</th>
+                  <th>音标</th>
+                  <th>词性</th>
+                  <th>义项</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {visible.map((word, index) => (
+                  <tr
+                    key={word.id}
+                    className={word.status === 'queued' ? 'row-queued' : undefined}
+                    onClick={() => navigate(`/words/${word.id}`)}
+                  >
+                    <td className="col-idx">{index + 1}</td>
+                    <td>
+                      <span className="word-lemma">{word.lemma}</span>
+                      {word.status === 'queued' && (
+                        <span className="badge badge-neutral">待生成</span>
+                      )}
+                    </td>
+                    <td className="mono muted small">{word.phonetic || '—'}</td>
+                    <td>
+                      {word.pos.length > 0 ? (
+                        word.pos.map((pos, posIndex) => (
+                          <span className="pos-chip" key={`${pos}-${posIndex}`}>
+                            {pos}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="muted">—</span>
+                      )}
+                    </td>
+                    <td className="sense-cell">
+                      {word.senses.length === 0 ? (
+                        <span className="muted small">尚未生成义项</span>
+                      ) : (
+                        <span className="sense-line">
+                          {word.senses.map((sense, senseIndex) => (
+                            <span className="sense-entry" key={`${sense.senseNo}-${senseIndex}`}>
+                              <span className="sense-index">{sense.senseNo}.</span>
+                              <span>{sense.cnGloss}</span>
+                              {senseIndex < word.senses.length - 1 ? (
+                                <span className="sense-sep">；</span>
+                              ) : null}
+                            </span>
+                          ))}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
+
+      {pendingWord && (
+        <Modal
+          title="该单词不在当前词库中"
+          onClose={() => setPendingWord(null)}
+          footer={
+            <>
+              <button className="btn" type="button" onClick={() => setPendingWord(null)}>
+                取消
+              </button>
+              <button
+                className="btn btn-primary"
+                type="button"
+                disabled={submitting}
+                onClick={() => void confirmCreate()}
+              >
+                {submitting ? '创建中…' : '继续研究'}
+              </button>
+            </>
+          }
+        >
+          <p className="dialog-lead">「{pendingWord}」不在当前词库中，是否继续研究？</p>
+          <p className="hint">继续后会为它创建新的词条，并从零开始生成研究内容。</p>
+          {error && <div className="notice notice-error small">{error}</div>}
+        </Modal>
+      )}
     </div>
   );
 }

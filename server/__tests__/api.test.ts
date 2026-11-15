@@ -145,3 +145,33 @@ describe('核心流程（mock 模式）', () => {
     expect(stats.body.wordCount).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe('词库校验接口', () => {
+  it('已入库单词：大小写与空格归一后仍能命中', async () => {
+    const response = await request(app).get('/api/words/lookup?word=%20Suspend%20');
+    expect(response.status).toBe(200);
+    expect(response.body.valid).toBe(true);
+    expect(response.body.word).toBe('suspend');
+    expect(response.body.existing).not.toBeNull();
+    expect(response.body.existing.lemma).toBe('suspend');
+  });
+
+  it('未入库单词返回 existing=null', async () => {
+    const response = await request(app).get('/api/words/lookup?word=ambition');
+    expect(response.body.valid).toBe(true);
+    expect(response.body.existing).toBeNull();
+  });
+
+  it('校验只做精确匹配，不做模糊匹配', async () => {
+    const response = await request(app).get('/api/words/lookup?word=suspen');
+    expect(response.body.valid).toBe(true);
+    expect(response.body.existing).toBeNull();
+  });
+
+  it('非法字符返回 valid=false', async () => {
+    const response = await request(app).get('/api/words/lookup?word=sus%20pend!');
+    expect(response.body.valid).toBe(false);
+    expect(response.body.existing).toBeNull();
+  });
+});
+
