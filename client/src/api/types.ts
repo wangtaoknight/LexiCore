@@ -40,6 +40,9 @@ export type WordSummary = Word & {
   pendingCount: number;
   approvedCount: number;
   senseCount: number;
+  phonetic: string;
+  pos: string[];
+  senses: Array<{ senseNo: number; pos: string; cnGloss: string }>;
 };
 
 export type Stats = {

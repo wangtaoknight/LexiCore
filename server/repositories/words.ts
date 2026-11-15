@@ -17,6 +17,9 @@ export type WordSummary = Word & {
   pendingCount: number;
   approvedCount: number;
   senseCount: number;
+  phonetic: string;
+  pos: string[];
+  senses: Array<{ senseNo: number; pos: string; cnGloss: string }>;
 };
 
 type WordRow = {
@@ -110,13 +113,63 @@ export function listWords(): WordSummary[] {
     }
   >;
 
-  return rows.map((row) => ({
-    ...rowToWord(row),
-    itemCount: row.item_count,
-    pendingCount: row.pending_count,
-    approvedCount: row.approved_count,
-    senseCount: row.sense_count,
-  }));
+  const db = getDb();
+  const basicRows = db
+    .prepare("SELECT word_id, payload FROM items WHERE kind = 'word_basic'")
+    .all() as Array<{ word_id: string; payload: string }>;
+  const senseRows = db
+    .prepare("SELECT word_id, payload FROM items WHERE kind = 'sense' ORDER BY seq ASC")
+    .all() as Array<{ word_id: string; payload: string }>;
+
+  const basicByWord = new Map<string, { phonetic: string; pos: string[] }>();
+  for (const row of basicRows) {
+    try {
+      const payload = JSON.parse(row.payload) as { phonetic?: unknown; pos?: unknown };
+      basicByWord.set(row.word_id, {
+        phonetic: typeof payload.phonetic === 'string' ? payload.phonetic : '',
+        pos: Array.isArray(payload.pos) ? payload.pos.map(String) : [],
+      });
+    } catch {
+      // 单条数据损坏时忽略，不影响列表
+    }
+  }
+
+  const sensesByWord = new Map<
+    string,
+    Array<{ senseNo: number; pos: string; cnGloss: string }>
+  >();
+  for (const row of senseRows) {
+    try {
+      const payload = JSON.parse(row.payload) as {
+        senseNo?: unknown;
+        pos?: unknown;
+        cnGloss?: unknown;
+      };
+      const list = sensesByWord.get(row.word_id) ?? [];
+      list.push({
+        senseNo: Number(payload.senseNo ?? list.length + 1),
+        pos: String(payload.pos ?? ''),
+        cnGloss: String(payload.cnGloss ?? ''),
+      });
+      sensesByWord.set(row.word_id, list);
+    } catch {
+      // 同上
+    }
+  }
+
+  return rows.map((row) => {
+    const basic = basicByWord.get(row.id);
+    return {
+      ...rowToWord(row),
+      itemCount: row.item_count,
+      pendingCount: row.pending_count,
+      approvedCount: row.approved_count,
+      senseCount: row.sense_count,
+      phonetic: basic?.phonetic ?? '',
+      pos: basic?.pos ?? [],
+      senses: sensesByWord.get(row.id) ?? [],
+    };
+  });
 }
 
 export function getStats(): {
