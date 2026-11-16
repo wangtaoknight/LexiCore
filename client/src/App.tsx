@@ -7,17 +7,25 @@ import SettingsPage from './pages/Settings';
 export default function App() {
   const location = useLocation();
   const isHome = location.pathname === '/';
+  const isWordDetail = location.pathname.startsWith('/words/');
 
   return (
     <div className="app-shell">
       <header className="topbar">
-        <Link to="/" className="brand" aria-label="回到首页">
-          <span className="brand-mark">词</span>
-          <div>
-            <div className="brand-title">单词概念研究台</div>
-            {/* <div className="brand-subtitle">词义 ·  边界</div> */}
-          </div>
-        </Link>
+        <div className="topbar-left">
+          <Link to="/" className="brand" aria-label="回到首页">
+            <span className="brand-mark">词</span>
+            <div>
+              <div className="brand-title">单词概念研究台</div>
+              {/* <div className="brand-subtitle">词义 ·  边界</div> */}
+            </div>
+          </Link>
+          {isWordDetail && (
+            <Link to="/" className="topbar-back">
+              <span aria-hidden="true">←</span> 单词列表
+            </Link>
+          )}
+        </div>
         {isHome && (
           <p className="topbar-tagline">
             输入一个英文单词，先由 AI 辅助梳理义项清单；针对每个义项，由人工逐条审核后进入知识库。

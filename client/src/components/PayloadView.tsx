@@ -1,5 +1,6 @@
 import type { ItemKind } from '../api/types';
 import { FIELD_SPECS, labelForValue } from '../ui/fields';
+import type { FieldSpec } from '../ui/fields';
 
 function renderValue(value: unknown, spec: (typeof FIELD_SPECS)[ItemKind][number]) {
   if (Array.isArray(value)) {
@@ -23,14 +24,23 @@ export function PayloadView({
   kind,
   payload,
   hideKeys = [],
+  orderKeys,
 }: {
   kind: ItemKind;
   payload: Record<string, unknown>;
   hideKeys?: string[];
+  /** 指定字段的展示顺序；给出时只展示这些字段 */
+  orderKeys?: string[];
 }) {
-  const specs = FIELD_SPECS[kind].filter(
+  let specs = FIELD_SPECS[kind].filter(
     (spec) => spec.key !== 'evidenceType' && !hideKeys.includes(spec.key),
   );
+
+  if (orderKeys) {
+    specs = orderKeys
+      .map((key) => specs.find((spec) => spec.key === key))
+      .filter((spec): spec is FieldSpec => Boolean(spec));
+  }
 
   return (
     <div className="payload">

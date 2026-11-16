@@ -1,5 +1,5 @@
 import type { Item } from '../api/types';
-import { FREQ_LABEL, IMPORTANCE_LABEL, itemTitle } from '../ui/labels';
+import { FREQ_LABEL, itemTitle } from '../ui/labels';
 import { ExampleText } from './ExampleText';
 import { ItemCard } from './ItemCard';
 
@@ -63,12 +63,9 @@ export function SenseBlock({
             <span className="badge badge-neutral">
               {FREQ_LABEL[payload.frequency] ?? payload.frequency}
             </span>
-            <span className="badge badge-neutral">
-              {IMPORTANCE_LABEL[payload.cet6Importance] ?? payload.cet6Importance}
-            </span>
           </>
         }
-        hideKeys={['senseNo', 'cnGloss']}
+        hideKeys={['senseNo', 'cnGloss', 'pos', 'frequency', 'cet6Importance']}
         onChanged={onChanged}
       />
 

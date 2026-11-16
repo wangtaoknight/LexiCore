@@ -77,6 +77,34 @@ a:hover {
   border-bottom: 1px solid var(--border);
 }
 
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.topbar-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: 13px;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.topbar-back:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -170,7 +198,7 @@ a:hover {
   flex: 1;
   min-height: 0;
   width: 100%;
-  max-width: 1120px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 28px 24px 32px;
   overflow-y: auto;
@@ -1637,5 +1665,276 @@ mark.hl {
 
   .match-go {
     margin-left: 0;
+  }
+}
+
+/* ---------- 单词详情：两栏布局 ---------- */
+.word-detail-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.word-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 400px minmax(0, 1fr);
+  gap: 28px;
+  align-items: stretch;
+}
+
+.word-side {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.word-head {
+  padding-bottom: 2px;
+}
+
+.word-head-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.review-flag {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 650;
+  border: 1px solid transparent;
+}
+
+.review-flag.is-pending {
+  background: #ecebe5;
+  color: var(--muted);
+  border-color: var(--border);
+}
+
+.review-flag.is-done {
+  background: var(--ok-soft);
+  color: var(--ok);
+  border-color: #c8e0d1;
+}
+
+.word-head-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+}
+
+.word-main {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 左欄紧凑化，保证一屏内展示全部信息 */
+.word-side .card-body {
+  padding: 12px 14px;
+}
+
+.word-side .payload {
+  gap: 9px;
+}
+
+.word-side .payload-label {
+  font-size: 11px;
+  margin-bottom: 1px;
+}
+
+.word-side .payload-text {
+  font-size: 13.6px;
+  line-height: 1.65;
+}
+
+.word-side .review-actions {
+  margin-top: 10px;
+  padding-top: 10px;
+  gap: 6px;
+}
+
+/* 义项面板：筛选器固定，仅内容区滚动 */
+.sense-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.sense-tabs {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 6px;
+  padding: 8px;
+  background: var(--surface-soft);
+  border-bottom: 1px solid var(--border);
+}
+
+.word-side .item-card .card-header {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+.word-side .item-title {
+  white-space: nowrap;
+}
+
+.sense-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 18px 18px;
+}
+
+.sense-panel .sense-block {
+  margin-top: 0;
+}
+
+.sense-panel .item-card {
+  margin-top: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sense-panel .item-card > .card-header {
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sense-panel .item-card > .card-body {
+  padding: 12px 0 0;
+}
+
+.sense-panel .children-wrap {
+  margin: 14px 0 0;
+  padding-left: 14px;
+}
+
+.sense-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.sense-tab:hover {
+  background: #eceae4;
+  color: var(--text-soft);
+}
+
+.sense-tab.active {
+  background: var(--accent);
+  border-color: var(--accent-strong);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(47, 93, 98, 0.22);
+}
+
+.sense-tab-no {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #e6e4dd;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.sense-tab.active .sense-tab-no {
+  background: rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+
+.sense-tab-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sense-tab-gloss {
+  flex: 1 1 auto;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sense-tab-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.sense-tab.active .sense-tab-dot {
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.sense-tab-dot.status-rejected {
+  background: var(--danger);
+}
+
+.word-main .sense-block {
+  margin-top: 0;
+}
+
+@media (max-width: 999px) {
+  .word-detail-page {
+    height: auto;
+  }
+
+  .word-layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .word-side {
+    overflow: visible;
+  }
+
+  .sense-panel {
+    min-height: 0;
+  }
+
+  .sense-scroll {
+    overflow: visible;
+  }
+
+  .sense-tabs {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
 }
