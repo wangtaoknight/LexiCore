@@ -1,0 +1,44 @@
+project-root/ Git 仓库的根
+├── README.md                  # 项目总入口：一句话说明 + 目录导航 + 快速开始
+├── 00-inbox/                  # 【入口】从各个地方收集的，还未处理的原始资料，是暂存区，不是项目
+│   ├── 项目参考资料
+│
+├── 01-docs/                   # 【文档】项目全过程文档（处理后的、有结论的）
+│   ├── 00-charter.md          # 项目章程、目标、范围
+│   ├── requirements/          # 需求清单、用户故事、验收标准
+│   ├── design/                # 架构设计、模块图、数据模型、流程图
+│   ├── adr/                   # 架构决策记录（ADR-001-数据库选型.md）
+│   ├── api/                   # 接口契约、OpenAPI/Swagger 定义
+│   ├── meetings/              # 会议纪要、决策记录
+│   ├── CHANGELOG.md           # 变更日志（Keep a Changelog 格式）
+│   └── DECISIONS.md           # 重要决策的时间线速查表
+│
+├── 02-code/                   # 
+│   ├── src/                   # 源码（按模块/分层划分子目录）
+│   ├── tests/                 # 单元、集成测试（与 src 镜像结构）
+│   ├── config/                # 配置模板（appsettings.json 等，敏感值用 .example）
+│   ├── scripts/               # 构建、数据迁移、代码生成、自动化脚本
+│   ├── docs/                  # 代码级文档：README、架构说明、注释生成站点
+│
+├── 03-assets/                 # 【素材】设计稿、图标、图片、UI 切图、演示 PPT
+│   ├── figma/  icons/  images/  presentations/
+│
+├── 04-data/                   # 【数据】数据集、样本、数据库脚本
+│   ├── raw/                   # 原始数据（只读，绝不就地修改）
+│   ├── processed/             # 清洗后数据
+│   ├── schemas/               # DDL、数据库迁移脚本
+│   └── fixtures/              # 测试用种子数据、Mock 数据
+│
+├── 05-research/               # 【研究】研究型/复现型项目才需要
+│   ├── literature/            # 论文、规范、标准原文
+│   ├── experiments/           # 实验记录、参数、结果对比
+│   └── notes/                 # 学习笔记、逆向分析、踩坑记录
+│
+├── 06-deploy/                 # 【部署】环境配置与运维
+│   ├── docker/                # Dockerfile、compose
+│   ├── env/                   # 各环境说明（dev/test/prod），密钥只放引用不放值
+│   ├── monitoring/            # 监控面板、告警规则
+│   └── runbook.md             # 部署手册 + 回滚预案 + 故障处理
+│
+└── 07-archive/                # 【归档】废弃方案、旧版本存档、过期资料
+    └── 2026Q3-旧版原型/

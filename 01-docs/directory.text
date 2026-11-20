@@ -1,0 +1,26 @@
+project-root/
+├── README.md                     # 项目入口（未动）
+├── 00-inbox/                     # 【暂存】未处理的原始资料
+│   ├── Eric-Cheung_..._SkELL-Netspeak_Act-Ans.pdf
+│   ├── t.text                    # 原 1. inbox/t.text
+│   ├── todo                      # 随手记的研究待办（未跟踪文件）
+│   └── 单词难记.docx
+├── 01-docs/                      # 【文档】已处理、有结论的项目文档
+│   ├── 白皮书.md
+│   ├── 白皮书.rtf
+│   ├── 技术约束.md
+│   ├── 具体思路.md
+│   ├── 软件开发思路.md
+│   ├── AI提示词.md
+│   └── plan-englishVocabularyConceptSystemV1.prompt.md
+├── 04-data/                      # 【数据】静态数据集
+│   └── vocabulary.txt            # 5651 个六级词表（代码不引用）
+├── vocabulary copy.txt           # ⚠ 必须留在根目录（见下文）
+├── .env.example / .gitignore
+├── package.json / package-lock.json
+├── tsconfig.json / vitest.config.ts
+├── server/                       # 后端源码 + __tests__
+├── client/                       # 前端源码
+├── scripts/                      # 构建脚本（ensure-sqlite-prebuild.js）
+├── data/                         # 运行时 SQLite + secret.key（已 gitignore）
+└── dist/                         # 构建产物（已 gitignore）

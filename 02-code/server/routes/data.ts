@@ -74,11 +74,11 @@ dataRouter.post(
   }),
 );
 
-/** 从项目根目录的 vocabulary copy.txt 导入待研究单词（不调用 AI） */
+/** 从配置的待研究词表导入单词（默认 04-data/fixtures/vocabulary copy.txt，不调用 AI） */
 dataRouter.post('/backlog/import', (_req, res) => {
-  const file = path.join(process.cwd(), 'vocabulary copy.txt');
+  const file = config.vocabularyImportFile;
   if (!fs.existsSync(file)) {
-    throw badRequest('未找到 vocabulary copy.txt（应位于项目根目录）');
+    throw badRequest(`未找到待导入词表：${file}（可用环境变量 VOCABULARY_IMPORT_FILE 指定）`);
   }
   const lines = fs
     .readFileSync(file, 'utf8')
