@@ -1,0 +1,19 @@
+{
+  "name": "vocabulary-concept-lab-root",
+  "version": "0.1.0",
+  "private": true,
+  "description": "仓库根入口：把命令原样转发到 02-code/（代码所在目录），这样在根目录也能直接 npm run dev",
+  "scripts": {
+    "dev": "npm --prefix 02-code run dev",
+    "dev:server": "npm --prefix 02-code run dev:server",
+    "dev:client": "npm --prefix 02-code run dev:client",
+    "build": "npm --prefix 02-code run build",
+    "build:server": "npm --prefix 02-code run build:server",
+    "build:client": "npm --prefix 02-code run build:client",
+    "start": "npm --prefix 02-code run start",
+    "typecheck": "npm --prefix 02-code run typecheck",
+    "test": "npm --prefix 02-code run test",
+    "db:migrate": "npm --prefix 02-code run db:migrate",
+    "setup:sqlite": "npm --prefix 02-code run setup:sqlite"
+  }
+}

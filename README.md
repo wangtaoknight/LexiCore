@@ -2,6 +2,26 @@
 
 以「概念理解」为核心的英语词汇研究工具。它不是背单词软件：输入一个单词后，AI 先梳理义项清单，再由你对**每个义项、每条例句、每个搭配、每个近义词/反义词**逐条审核、驳回、修改或重新分析。只有人工通过的内容才进入正式知识库。
 
+## 目录结构
+
+```text
+00-inbox/    暂存的原始资料（参考资料、草稿，不参与构建）
+01-docs/     项目文档
+  ├── 00-charter.md        项目章程与目标
+  ├── requirements/        需求与约束（含最初的构想 prompt）
+  ├── design/              设计思路与 AI 提示词设计
+  ├── adr/                 架构决策记录 ADR-001 ~ ADR-006
+  ├── api/endpoints.md     HTTP 接口契约
+  ├── CHANGELOG.md         变更日志
+  ├── DECISIONS.md         决策时间线速查
+  └── 对话执行记录.md      每轮对话的执行记录（诉求 / 诊断 / 改动 / 验证）
+02-code/     可运行代码（单个 npm 包：server/ client/ scripts/ dist/ data/）
+04-data/     静态数据：raw/ 原始词表（只读）、fixtures/ 导入用样本
+07-archive/  归档资料（旧格式副本等）
+```
+
+> 代码在 `02-code/`。在 `02-code/` 下可以直接执行所有 npm 命令；仓库根目录的 `package.json` 只是转发入口，所以**在根目录直接 `npm run dev` / `npm start` 也能用**。
+
 ## 核心设计
 
 - **单词 → 义项 → 内容单元**：`word_basic`、`sense`、`sense_concept`、`sense_history`、`example`、`collocation`、`synonym`、`antonym` 都是独立的可审核对象。
@@ -17,7 +37,9 @@ Node.js + TypeScript、Express、better-sqlite3（单文件 SQLite）、React + 
 ## 快速开始
 
 ```powershell
-# 1. 安装依赖
+# 在仓库根目录或 02-code/ 下执行都可以
+# 1. 安装依赖（依赖装在 02-code/ 下，首次必须进该目录）
+cd 02-code
 npm install
 
 # 若 better-sqlite3 编译失败（本机没有 Python / MSVC），改用：
@@ -31,6 +53,7 @@ Copy-Item .env.example .env
 npm run db:migrate
 
 # 4. 开发模式（后端 5174 + 前端 5173）
+cd ..            # 回根目录也可以，根 package.json 会转发
 npm run dev
 ```
 
@@ -54,6 +77,7 @@ npm start        # 由 Express 托管 dist/client，访问 http://127.0.0.1:5174
 | `DB_PATH` | SQLite 文件路径，默认 `data/app.db` |
 | `APP_SECRET` | 加密 API Key 的密钥；留空则在 `data/secret.key` 自动生成 |
 | `AI_MODE` | `live`（真实调用）或 `mock`（离线样例） |
+| `VOCABULARY_IMPORT_FILE` | 「导入待研究清单」读取的文件；默认 `../04-data/fixtures/vocabulary copy.txt` |
 
 ## 使用流程
 
@@ -67,7 +91,7 @@ npm start        # 由 Express 托管 dist/client，访问 http://127.0.0.1:5174
    - **历史**：查看版本差异、修改说明与审核事件流水。
    - **追问**：就这一条内容提问，回答不写入数据库。
 4. 「审核中心」可按状态/类型筛选所有待审核内容，跨单词集中处理。
-5. 「设置与数据」支持导出 JSON / Markdown、备份与恢复数据库、导入 `vocabulary copy.txt` 作为待研究清单。
+5. 「设置与数据」支持导出 JSON / Markdown、备份与恢复数据库、导入 `04-data/fixtures/vocabulary copy.txt` 作为待研究清单。
 
 ## AI 接口
 
