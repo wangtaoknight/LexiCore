@@ -1699,6 +1699,193 @@ mark.hl {
   scrollbar-width: thin;
 }
 
+/* 左栏分区：当代词义地图 / 词源与词义脉络 */
+.side-section {
+  margin-top: 14px;
+}
+
+.side-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.side-section-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.3px;
+  color: var(--text-soft);
+}
+
+.concept-map-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* 超过 3 项时，左侧多出可点击的一栏（展开 / 收起） */
+.concept-map-wrap.has-more {
+  grid-template-columns: 30px minmax(0, 1fr);
+  column-gap: 6px;
+}
+
+.concept-map-rail {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 6px 0;
+  border: 1px dashed var(--border-strong);
+  border-radius: 9px;
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.concept-map-rail:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.concept-map-caret {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  transition: transform 0.18s ease;
+}
+
+.concept-map-rail.expanded .concept-map-caret {
+  transform: rotate(180deg);
+}
+
+.concept-map {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.concept-map-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.concept-map-item:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-soft);
+}
+
+.concept-map-item.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.concept-map-no {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: #ecebe5;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.concept-map-item.active .concept-map-no {
+  background: var(--accent);
+  color: #fff;
+}
+
+.concept-map-gloss {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.concept-map-pos {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.concept-map-empty {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 9px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+/* 折叠区：词源与词义脉络 */
+.side-fold {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.side-fold-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.side-fold-summary::-webkit-details-marker {
+  display: none;
+}
+
+.side-fold-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.side-fold .hint-open {
+  display: none;
+}
+
+.side-fold[open] .hint-idle {
+  display: none;
+}
+
+.side-fold[open] .hint-open {
+  display: inline;
+}
+
+.side-fold-body {
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--border);
+}
+
 .word-head {
   padding-bottom: 2px;
 }
@@ -1944,4 +2131,526 @@ mark.hl {
   .sense-tabs {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
+}
+
+/* ---------- 义项研究：模块化精简视图 ---------- */
+.section-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.section-toggle {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.section-toggle:hover,
+.section-toggle.on {
+  background: none;
+  color: var(--accent-strong);
+}
+
+.module-caret {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.18s ease;
+}
+
+.section-toggle.on .module-caret,
+.module-toggle.on .module-caret {
+  transform: rotate(180deg);
+}
+
+/* 当前义项头部 */
+.sense-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0 2px 12px;
+}
+
+.sense-head-no {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.sense-head-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  min-width: 0;
+}
+
+.sense-head-gloss {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.sense-head-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sense-head-tags .pos-chip {
+  margin-right: 0;
+}
+
+.tag-chip {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #ecebe5;
+  color: var(--text-soft);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+/* 模块卡片 */
+.sense-module {
+  padding: 14px 2px 4px;
+  border-top: 1px solid var(--border);
+}
+
+.module-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+/* 模块头右侧靠右的辅助信息 */
+.module-head-end {
+  margin-left: auto;
+}
+
+/* 紧跟在模块标题后的翻译按钮，与标题留出约 4 个空格的间距 */
+.module-head > .module-title + .inline-btn {
+  margin-left: 6px;
+}
+
+.module-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+}
+
+.module-title a {
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.module-title a:hover {
+  color: var(--accent-strong);
+}
+
+.module-toggle {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.module-toggle:hover,
+.module-toggle.on {
+  background: none;
+  color: var(--accent-strong);
+}
+
+.module-text-en {
+  margin: 0 0 6px;
+  font-family: var(--font-serif);
+  font-size: 15.5px;
+  line-height: 1.6;
+}
+
+.module-text-cn {
+  margin: 0 0 6px;
+  color: var(--text-soft);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.module-text {
+  margin: 0 0 6px;
+  font-size: 14.2px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.module-text-sub {
+  margin: 0 0 6px;
+  color: var(--text-soft);
+  font-size: 13.6px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.module-extra {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--surface-soft);
+}
+
+/* 例句行 */
+.example-row {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.example-no {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border-radius: 50%;
+  background: #ecebe5;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.example-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.example-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 0;
+}
+
+.example-row .review-actions,
+.colloc-row .review-actions {
+  margin-top: 6px;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* 搭配行 */
+.colloc-row {
+  padding: 6px 0;
+}
+
+.colloc-phrase {
+  margin: 0 0 2px;
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.colloc-cn {
+  margin-left: 8px;
+  color: var(--text-soft);
+  font-size: 13.5px;
+  font-weight: 400;
+}
+
+.link-btn {
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+/* 模块底部的展开 / 联网等文字按钮 */
+.module-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+.link-btn:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* 悬浮才显示审核操作；不显示时折叠占位 */
+.sense-module .module-actions,
+.word-side .module-actions {
+  display: none;
+}
+
+/* 左栏词源区：悬浮左栏或弹窗打开时显示 */
+.word-side:hover .module-actions,
+.word-side:has(.modal-overlay) .module-actions {
+  display: block;
+}
+
+/* 行级：只显示鼠标所在那一行的操作条 */
+.example-row:hover > .example-main > .module-actions,
+.colloc-row:hover > .module-actions,
+.example-row:has(.modal-overlay) > .example-main > .module-actions,
+.colloc-row:has(.modal-overlay) > .module-actions {
+  display: block;
+}
+
+/* 同反义词：词内联排列，操作条也内联显示在词后 */
+.word-pair-item:hover > .module-actions,
+.word-pair-item:has(.modal-overlay) > .module-actions {
+  display: inline-flex;
+}
+
+.word-pair-item .module-actions {
+  align-items: center;
+  gap: 4px;
+}
+
+.word-pair-item .module-actions .btn {
+  padding: 0 6px;
+  font-size: 11.5px;
+  line-height: 18px;
+}
+
+/* 模块标题旁的来源链接 */
+.module-src {
+  flex: none;
+  padding: 1px 7px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 999px;
+  color: var(--text-soft);
+  font-size: 11.5px;
+  line-height: 16px;
+  text-decoration: none;
+}
+
+.module-src:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+/* 弹窗内的单条审核工具 */
+.modal-review {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+/* 可点击的模块标题 */
+.section-title-btn,
+.module-title-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.section-title-btn:hover,
+.module-title-btn:hover {
+  color: var(--accent-strong);
+}
+
+.module-title-btn {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+/* 释义句末的行内按钮 */
+.inline-btn {
+  margin-left: 8px;
+  padding: 0 8px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  font-family: inherit;
+  font-size: 11.5px;
+  line-height: 18px;
+  vertical-align: 1px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.inline-btn:hover,
+.inline-btn.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+/* 例句 / 同反义词后面的折叠按钮：无边框，只留一个小箭头 */
+.inline-caret {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--muted);
+  vertical-align: -2px;
+  cursor: pointer;
+  transition: transform 0.18s ease, color 0.15s ease;
+}
+
+.inline-caret .module-caret {
+  width: 13px;
+  height: 13px;
+}
+
+.inline-caret:hover {
+  color: var(--accent-strong);
+}
+
+.inline-caret.on {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
+.example-source {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #ecebe5;
+  color: var(--text-soft);
+  font-size: 11.5px;
+  white-space: nowrap;
+  text-decoration: none;
+  vertical-align: 2px;
+}
+
+a.example-source:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+.example-source.is-plain {
+  opacity: 0.85;
+}
+
+/* 同反义词：两个分组优先并排在一行，装不下时自动换行 */
+.word-pair-groups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 2px 18px;
+}
+
+.word-pair-group {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 100%;
+  padding: 3px 0;
+}
+
+.word-pair-group + .word-pair-group {
+  padding-left: 18px;
+  border-left: 1px dashed var(--border);
+}
+
+.word-pair-label {
+  flex: none;
+  margin-top: 1px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ecebe5;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 18px;
+}
+
+.word-pair-words {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1px 10px;
+  min-width: 0;
+}
+
+.word-pair-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.word-pair-word {
+  font-size: 13.6px;
+  font-weight: 650;
+}
+
+.word-pair-item .inline-caret {
+  width: 16px;
+  height: 16px;
+  margin-left: 2px;
+  border-style: none;
+  background: transparent;
+  vertical-align: 0;
+}
+
+.word-pair-item .inline-caret .module-caret {
+  width: 11px;
+  height: 11px;
+}
+
+/* 展开后的解释：单独占一行，不挤占其他词 */
+.word-pair-note {
+  flex: 1 0 100%;
+  margin: 1px 0 3px;
+  padding-left: 8px;
+  border-left: 2px solid var(--border);
+  color: var(--text-soft);
+  font-size: 12.6px;
+  line-height: 1.55;
 }

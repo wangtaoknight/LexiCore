@@ -33,6 +33,8 @@ export const wordBasicPayloadSchema = z.object({
 export const sensePayloadSchema = z.object({
   senseNo: z.number().int().min(1).max(99),
   pos: text(40),
+  /** 词性细节标签：及物/不及物、可数性、语域或学科等（可空） */
+  posTags: z.array(z.string().trim().min(1).max(20)).max(6).default([]),
   cnGloss: text(200),
   enDefinition: text(1200),
   frequency: frequencySchema,
@@ -158,6 +160,11 @@ export const senseStudyOutputSchema = z.object({
   examples: z.array(examplePayloadSchema).min(1).max(6),
   collocations: z.array(collocationPayloadSchema).max(8).default([]),
   synonyms: z.array(synonymPayloadSchema).max(6).default([]),
+  antonyms: z.array(antonymPayloadSchema).max(6).default([]),
+});
+
+/** 任务输出：为某个义项补充反义词候选（允许为空数组，表示确实没有合适反义词） */
+export const senseAntonymsOutputSchema = z.object({
   antonyms: z.array(antonymPayloadSchema).max(6).default([]),
 });
 

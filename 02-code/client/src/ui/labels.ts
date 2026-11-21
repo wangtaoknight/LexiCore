@@ -46,7 +46,7 @@ export const SOURCE_TYPE_LABEL: Record<string, string> = {
   dictionary: '词典',
   news: '新闻/网页',
   media: '影视台词',
-  ai: 'AI生成例句',
+  ai: 'AI',
 };
 
 export function formatDate(iso: string): string {

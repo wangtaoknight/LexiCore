@@ -169,6 +169,22 @@ export function mockChatResponse(taskType: string, mockKey?: string): string {
       return JSON.stringify(senseStudy(mockKey ?? ''));
     case 'explain':
       return '（mock 回答）这里会用一句话解释该义项与相近表达的区别，并指出原内容中可能过度概括的地方。';
+    case 'translate':
+      return '（mock 译文）使某物暂时停止或悬挂起来的状态。';
+    case 'sense_antonyms':
+      return JSON.stringify({
+        antonyms: [
+          {
+            word: 'resume',
+            coreMeaning: '重新开始、恢复',
+            opposition: '与本义项“暂停/中止”构成直接反义：一方是使活动中止，一方是使活动恢复',
+            difference: 'resume 只能用于可恢复的活动（谈判、服务、比赛），不能用于物理“悬挂”义。',
+            typicalScene: '谈判/服务/航班恢复',
+            isDirect: true,
+            evidenceType: 'ai_inferred',
+          },
+        ],
+      });
     case 'example_queries':
       return JSON.stringify({ queries: ['suspend all flights', 'suspend operations example'] });
     case 'example_extract':

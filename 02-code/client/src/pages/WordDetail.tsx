@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api, errorMessage } from '../api/client';
 import type { Job, WordDetailResponse } from '../api/types';
-import { ItemCard } from '../components/ItemCard';
+import { Modal } from '../components/Modal';
+import { PayloadView } from '../components/PayloadView';
+import { ReviewActions } from '../components/ReviewActions';
 import { SenseBlock } from '../components/SenseBlock';
 
 type WordBasic = {
@@ -49,6 +51,12 @@ export default function WordDetailPage() {
   const [tasks, setTasks] = useState<TaskRow[] | null>(null);
   const [sourceEnabled, setSourceEnabled] = useState(false);
   const [activeSenseId, setActiveSenseId] = useState<string | null>(null);
+  const [mapExpanded, setMapExpanded] = useState(false);
+  const [foldOpen, setFoldOpen] = useState(true);
+  const [showTabs, setShowTabs] = useState(false);
+  const [confirmApproveAll, setConfirmApproveAll] = useState(false);
+  const [approveAllBusy, setApproveAllBusy] = useState(false);
+  const [approveAllError, setApproveAllError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -131,6 +139,17 @@ export default function WordDetailPage() {
     }
   }
 
+  async function startAntonyms(senseId: string) {
+    setError(null);
+    try {
+      const result = await api.post<{ job: Job }>(`/items/${senseId}/antonyms`);
+      setJob(result.job);
+      setJobId(result.job.id);
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  }
+
   async function toggleTasks() {
     if (tasksOpen) {
       setTasksOpen(false);
@@ -187,6 +206,31 @@ export default function WordDetailPage() {
   // 界面按频率重排后，编号也随顺序重编（1..N），避免编号跳跃
   const displayNoById = new Map(senses.map((sense, index) => [sense.id, index + 1]));
   const running = job?.status === 'running';
+
+  const approveAllTargets = activeSense
+    ? [activeSense, ...data.items.filter((item) => item.parentId === activeSense.id)]
+    : [];
+  const approveAllPending = approveAllTargets.filter((item) => item.status !== 'approved');
+
+  async function approveAllUnderSense() {
+    if (approveAllPending.length === 0) {
+      setConfirmApproveAll(false);
+      return;
+    }
+    setApproveAllBusy(true);
+    setApproveAllError(null);
+    try {
+      for (const item of approveAllPending) {
+        await api.post(`/items/${item.id}/approve`);
+      }
+      setConfirmApproveAll(false);
+      await load();
+    } catch (err) {
+      setApproveAllError(errorMessage(err));
+    } finally {
+      setApproveAllBusy(false);
+    }
+  }
 
   return (
     <div className="page word-detail-page">
@@ -250,29 +294,124 @@ export default function WordDetailPage() {
             </div>
           )}
 
+          {/* 当代词义地图：只复用已有义项，不生成新内容；超过 3 项时左侧提供展开/收起 */}
+          <section className="side-section">
+            {senses.length > 0 ? (
+              <div className={`concept-map-wrap ${senses.length > 3 ? 'has-more' : ''}`}>
+                {senses.length > 3 && (
+                  <button
+                    type="button"
+                    className={`concept-map-rail ${mapExpanded ? 'expanded' : ''}`}
+                    aria-expanded={mapExpanded}
+                    aria-label={mapExpanded ? '收起义项列表' : `展开全部 ${senses.length} 个义项`}
+                    title={mapExpanded ? '收起义项列表' : `展开全部 ${senses.length} 个义项`}
+                    onClick={() => setMapExpanded((value) => !value)}
+                  >
+                    <svg className="concept-map-caret" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="m3 16 9-9 9 9"
+                        stroke="currentColor"
+                        strokeWidth="2.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                )}
+                <ol className="concept-map">
+                  {(mapExpanded ? senses : senses.slice(0, 3)).map((item) => {
+                    const payload = item.payload as unknown as SensePayload;
+                    return (
+                      <li key={item.id}>
+                        <button
+                          type="button"
+                          className={`concept-map-item ${activeSense?.id === item.id ? 'active' : ''}`}
+                          title="在右侧查看该义项"
+                          onClick={() => setActiveSenseId(item.id)}
+                        >
+                          <span className="concept-map-no">{displayNoById.get(item.id)}</span>
+                          <span className="concept-map-gloss">{payload.cnGloss}</span>
+                          <span className="mono concept-map-pos">{payload.pos}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+            ) : (
+              <p className="concept-map-empty">
+                还没有当代义项。生成单词概览后，这里会按常见程度列出义项；不会用旧的核心意义代替。
+              </p>
+            )}
+          </section>
+
+          {/* 词源与词义脉络：只做展示层合并（可折叠），数据字段不动 */}
           {basicItem && (
-            <ItemCard
-              item={basicItem}
-              title="基本信息"
-              hideKeys={['lemma', 'phonetic', 'pos']}
-              orderKeys={['coreMeaning', 'semanticHistory', 'etymology', 'coreMeaningNote']}
-              onChanged={handleItemChanged}
-            />
+            <details
+              className="side-fold"
+              open={foldOpen}
+              onToggle={(event) => setFoldOpen(event.currentTarget.open)}
+            >
+              <summary className="side-fold-summary">
+                <span className="side-section-title">词源与词义脉络</span>
+                <span className="side-fold-hint">
+                  <span className="hint-idle">展开</span>
+                  <span className="hint-open">收起</span>
+                </span>
+              </summary>
+              <div className="side-fold-body">
+                <PayloadView
+                  kind="word_basic"
+                  payload={basicItem.payload}
+                  orderKeys={['etymology', 'semanticHistory']}
+                />
+                <div className="module-actions">
+                  <ReviewActions item={basicItem} onChanged={handleItemChanged} />
+                </div>
+              </div>
+            </details>
           )}
         </aside>
 
         <section className="word-main">
           <div className="section-title-row">
-            <h2 className="section-title">义项研究</h2>
-            <span className="muted small">
-              {senses.length > 0
-                ? `共 ${senses.length} 个义项，按常见程度排列，点击标签切换`
-                : '每个义项独立生成、独立审核'}
-            </span>
+            <div className="section-title-left">
+              <button
+                className="section-title section-title-btn"
+                type="button"
+                title="点击：将当前义项下的内容全部审核通过"
+                onClick={() => {
+                  setApproveAllError(null);
+                  setConfirmApproveAll(true);
+                }}
+              >
+                义项研究
+              </button>
+              {senses.length > 1 && (
+                <button
+                  className={`section-toggle ${showTabs ? 'on' : ''}`}
+                  type="button"
+                  aria-expanded={showTabs}
+                  title={showTabs ? '隐藏义项切换标签' : '显示义项切换标签'}
+                  onClick={() => setShowTabs((value) => !value)}
+                >
+                  <svg className="module-caret" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="m3 16 9-9 9 9"
+                      stroke="currentColor"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
+
           </div>
 
           <div className="sense-panel">
-            {senses.length > 0 && (
+            {senses.length > 0 && showTabs && (
               <div className="sense-tabs" role="tablist" aria-label="义项切换">
                 {senses.map((item) => {
                   const payload = item.payload as unknown as SensePayload;
@@ -309,6 +448,7 @@ export default function WordDetailPage() {
                   onChanged={handleItemChanged}
                   onStartStudy={(senseId) => void startStudy(senseId)}
                   onStartSources={(senseId) => void startSources(senseId)}
+                  onStartAntonyms={(senseId) => void startAntonyms(senseId)}
                 />
               )}
 
@@ -379,6 +519,39 @@ export default function WordDetailPage() {
           </div>
         </section>
       </div>
+
+      {confirmApproveAll && (
+        <Modal
+          title="是否将「义项研究」下的内容全部审核通过？"
+          onClose={() => setConfirmApproveAll(false)}
+          footer={
+            <>
+              <button className="btn" type="button" onClick={() => setConfirmApproveAll(false)}>
+                取消
+              </button>
+              <button
+                className="btn btn-primary"
+                type="button"
+                disabled={approveAllBusy}
+                onClick={() => void approveAllUnderSense()}
+              >
+                {approveAllBusy ? '提交中…' : `全部通过（${approveAllPending.length} 条）`}
+              </button>
+            </>
+          }
+        >
+          <p className="hint">
+            将把当前义项
+            {activeSense
+              ? `「${displayNoById.get(activeSense.id)}. ${String(
+                  (activeSense.payload as unknown as SensePayload).cnGloss,
+                )}」`
+              : ''}
+            及其下所有待审核内容一次性通过，包括已驳回的条目。此操作无法批量撤销，只能逐条「解除通过」。
+          </p>
+          {approveAllError && <div className="notice notice-error small">{approveAllError}</div>}
+        </Modal>
+      )}
     </div>
   );
 }

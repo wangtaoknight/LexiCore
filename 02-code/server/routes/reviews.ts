@@ -6,9 +6,9 @@ import { badRequest, conflict } from '../errors';
 import { getDb } from '../db';
 import { asyncHandler } from '../middleware/error';
 import type { Item } from '../repositories/items';
-import { getItem } from '../repositories/items';
+import { getItem, listItemsByWord } from '../repositories/items';
 import { getWord } from '../repositories/words';
-import { generateSenseStudy } from '../services/analysisService';
+import { generateSenseAntonyms, generateSenseStudy } from '../services/analysisService';
 import { findRunningJob, startJob } from '../services/jobRunner';
 import { reanalyzeItem } from '../services/reanalyzeService';
 import { generateSourcedExamples } from '../services/sourceService';
@@ -164,6 +164,39 @@ reviewsRouter.get('/items/:id/versions', (req, res) => {
   res.json({ versions: listVersions(req.params.id) });
 });
 
+/**
+ * 按需翻译：把该条目中的英文释义翻成中文。
+ * 结果不落库（只用于页面上的「翻译」开关），调用仍会写 ai_tasks 便于排查。
+ */
+reviewsRouter.post(
+  '/items/:id/translate',
+  asyncHandler(async (req, res) => {
+    const item = getItem(req.params.id);
+    const source = String(
+      item.payload.enDefinition ?? item.payload.conceptCn ?? item.payload.en ?? '',
+    ).trim();
+    if (!source) {
+      throw badRequest('该条目没有可翻译的英文内容');
+    }
+    const result = await chat({
+      taskType: 'translate',
+      wordId: item.wordId,
+      itemId: item.id,
+      maxTokens: 800,
+      temperature: 0.2,
+      messages: [
+        {
+          role: 'system',
+          content:
+            '你是英汉词典编辑。把用户给出的英文释义翻译成简洁、准确的中文，只输出译文本身：不要解释、不要加引号、不要任何前缀。',
+        },
+        { role: 'user', content: source },
+      ],
+    });
+    res.json({ text: result.content.trim(), model: result.model, taskId: result.taskId });
+  }),
+);
+
 reviewsRouter.post(
   '/items/:id/study',
   asyncHandler(async (req, res) => {
@@ -186,6 +219,32 @@ reviewsRouter.post(
 reviewsRouter.get('/items/:id/events', (req, res) => {
   res.json({ events: listEvents(req.params.id) });
 });
+
+/** 为一个义项补充反义词候选（异步任务） */
+reviewsRouter.post(
+  '/items/:id/antonyms',
+  asyncHandler(async (req, res) => {
+    const item = getItem(req.params.id);
+    if (item.kind !== 'sense') {
+      throw badRequest('只能对「义项」条目补充反义词');
+    }
+    const existingAntonyms = listItemsByWord(item.wordId).filter(
+      (child) => child.parentId === item.id && child.kind === 'antonym',
+    );
+    if (existingAntonyms.length > 0) {
+      throw conflict('该义项已有反义词，无需重复生成。');
+    }
+    if (findRunningJob(item.wordId)) {
+      throw conflict('该单词已有正在运行的生成任务，请等待完成后再试');
+    }
+    const job = startJob({
+      type: 'sense_antonyms',
+      wordId: item.wordId,
+      run: (report) => generateSenseAntonyms(item.id, report),
+    });
+    res.status(202).json({ job });
+  }),
+);
 
 reviewsRouter.post(
   '/items/:id/reanalyze',

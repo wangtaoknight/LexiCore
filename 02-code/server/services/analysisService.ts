@@ -1,9 +1,13 @@
 import type { SensePayload } from '../ai/schemas';
-import { senseStudyOutputSchema, wordOverviewOutputSchema } from '../ai/schemas';
+import {
+  senseAntonymsOutputSchema,
+  senseStudyOutputSchema,
+  wordOverviewOutputSchema,
+} from '../ai/schemas';
 import { loadPrompt, fillPrompt } from '../ai/prompts';
 import { requestStructured } from '../ai/structured';
 import { getDb } from '../db';
-import { badRequest, conflict } from '../errors';
+import { badRequest, conflict, upstreamError } from '../errors';
 import {
   findItemsByKind,
   getItem,
@@ -74,6 +78,81 @@ export async function generateWordOverview(
 
   report('已写入数据库，全部条目处于待审核状态');
   return { lemma: word.lemma, senseCount: data.senses.length };
+}
+
+export type GeneratedAntonyms = {
+  count: number;
+};
+
+/**
+ * 只为某个义项补充反义词候选（模块 5 缺反义词时的手动触发）。
+ * 写入的条目仍然是 pending，需要人工审核。
+ */
+export async function generateSenseAntonyms(
+  senseItemId: string,
+  report: (message: string) => void,
+): Promise<GeneratedAntonyms> {
+  const sense = getItem(senseItemId);
+  if (sense.kind !== 'sense') {
+    throw badRequest('只能对「义项」条目补充反义词');
+  }
+
+  const existing = listItemsByWord(sense.wordId).filter(
+    (item) => item.parentId === sense.id && item.kind === 'antonym',
+  );
+  if (existing.length > 0) {
+    throw conflict('该义项已有反义词。如需调整，请对具体条目使用「修改」或「重新分析」。');
+  }
+
+  const word = getWord(sense.wordId);
+  const payload = sense.payload as unknown as SensePayload;
+
+  report(`正在为义项 ${payload.senseNo} 生成反义词候选…`);
+  const system = loadPrompt('system.md');
+  const user = fillPrompt(loadPrompt('sense_antonyms.md'), {
+    WORD: word.lemma,
+    SENSE_NO: String(payload.senseNo),
+    POS: payload.pos,
+    CN_GLOSS: payload.cnGloss,
+    EN_DEFINITION: payload.enDefinition,
+  });
+
+  const { data, taskId, model } = await requestStructured({
+    schema: senseAntonymsOutputSchema,
+    taskType: 'sense_antonyms',
+    system,
+    user,
+    wordId: word.id,
+    itemId: sense.id,
+    maxTokens: 3000,
+    mockKey: `${word.lemma}#${payload.senseNo}`,
+  });
+
+  const antonyms = data.antonyms ?? [];
+  if (antonyms.length === 0) {
+    throw upstreamError('模型认为该义项没有合适的直接反义词，已放弃写入');
+  }
+
+  const db = getDb();
+  const write = db.transaction(() => {
+    antonyms.forEach((antonym, index) => {
+      insertItemWithVersion({
+        wordId: word.id,
+        parentId: sense.id,
+        kind: 'antonym',
+        seq: index + 1,
+        pos: payload.pos,
+        payload: antonym as Record<string, unknown>,
+        changeSource: 'ai_initial',
+        model,
+        aiTaskId: taskId,
+      });
+    });
+  });
+  write();
+
+  report(`已写入 ${antonyms.length} 条待审核反义词`);
+  return { count: antonyms.length };
 }
 
 export type GeneratedSenseStudy = {

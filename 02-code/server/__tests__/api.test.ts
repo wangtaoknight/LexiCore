@@ -146,6 +146,94 @@ describe('核心流程（mock 模式）', () => {
   });
 });
 
+describe('义项模块化接口', () => {
+  let wordId = '';
+  let senseId = '';
+
+  beforeAll(async () => {
+    const response = await request(app).post('/api/words').send({ word: 'spoil' });
+    wordId = response.body.word.id;
+    if (response.body.job) await waitJob(response.body.job.id);
+    const detail = await request(app).get(`/api/words/${wordId}`);
+    senseId = detail.body.items.find((item: { kind: string }) => item.kind === 'sense').id;
+  });
+
+  it('义项缺少 posTags 时按空数组处理，不报错', async () => {
+    const detail = await request(app).get(`/api/items/${senseId}`);
+    expect(detail.status).toBe(200);
+    expect(Array.isArray(detail.body.item.payload.posTags)).toBe(true);
+  });
+
+  it('英文释义可按需翻译（不落库）', async () => {
+    const before = await request(app).get(`/api/items/${senseId}`);
+    const response = await request(app).post(`/api/items/${senseId}/translate`);
+    expect(response.status).toBe(200);
+    expect(response.body.text.length).toBeGreaterThan(0);
+    const after = await request(app).get(`/api/items/${senseId}`);
+    // 翻译只读，不产生新版本
+    expect(after.body.item.currentVersion).toBe(before.body.item.currentVersion);
+  });
+
+  it('追问返回回答但不写库', async () => {
+    const before = await request(app).get(`/api/items/${senseId}`);
+    const response = await request(app)
+      .post(`/api/items/${senseId}/explain`)
+      .send({ question: '这个义项和 damage 有什么区别？' });
+    expect(response.status).toBe(200);
+    expect(response.body.answer.length).toBeGreaterThan(0);
+    const after = await request(app).get(`/api/items/${senseId}`);
+    expect(after.body.item.currentVersion).toBe(before.body.item.currentVersion);
+    expect(after.body.item.status).toBe(before.body.item.status);
+  });
+
+  it('模块批量通过：逐条通过后全部变为 approved', async () => {
+    const study = await request(app).post(`/api/items/${senseId}/study`);
+    await waitJob(study.body.job.id);
+    const detail = await request(app).get(`/api/words/${wordId}`);
+    const examples = detail.body.items.filter(
+      (item: { parentId: string | null; kind: string }) =>
+        item.parentId === senseId && item.kind === 'example',
+    );
+    expect(examples.length).toBeGreaterThan(1);
+
+    for (const example of examples) {
+      const response = await request(app).post(`/api/items/${example.id}/approve`);
+      expect(response.body.item.status).toBe('approved');
+    }
+
+    const after = await request(app).get(`/api/words/${wordId}`);
+    const statuses = after.body.items
+      .filter((item: { parentId: string | null; kind: string }) =>
+        item.parentId === senseId && item.kind === 'example')
+      .map((item: { status: string }) => item.status);
+    expect(statuses.every((status: string) => status === 'approved')).toBe(true);
+  });
+
+  it('可为义项补充反义词候选（异步任务，重复调用冲突）', async () => {
+    // 用一个尚未深入研究过的义项（没有既有反义词）
+    const created = await request(app).post('/api/words').send({ word: 'foundation' });
+    if (created.body.job) await waitJob(created.body.job.id);
+    const detail = await request(app).get(`/api/words/${created.body.word.id}`);
+    const freshSense = detail.body.items.find((item: { kind: string }) => item.kind === 'sense');
+
+    const response = await request(app).post(`/api/items/${freshSense.id}/antonyms`);
+    expect(response.status).toBe(202);
+    const job = await waitJob(response.body.job.id);
+    expect(job.status).toBe('succeeded');
+
+    const after = await request(app).get(`/api/words/${created.body.word.id}`);
+    const antonyms = after.body.items.filter(
+      (item: { parentId: string | null; kind: string }) =>
+        item.parentId === freshSense.id && item.kind === 'antonym',
+    );
+    expect(antonyms.length).toBeGreaterThan(0);
+    expect(antonyms[0].status).toBe('pending');
+
+    const again = await request(app).post(`/api/items/${freshSense.id}/antonyms`);
+    expect(again.status).toBe(409);
+  });
+});
+
 describe('词库校验接口', () => {
   it('已入库单词：大小写与空格归一后仍能命中', async () => {
     const response = await request(app).get('/api/words/lookup?word=%20Suspend%20');

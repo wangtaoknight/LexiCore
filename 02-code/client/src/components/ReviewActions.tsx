@@ -15,9 +15,12 @@ const CHANGE_SOURCE_LABEL: Record<ItemVersion['changeSource'], string> = {
 export function ReviewActions({
   item,
   onChanged,
+  hide = [],
 }: {
   item: Item;
   onChanged: (item: Item) => void;
+  /** 隐藏指定操作（用于模块化页面里把批量通过/驳回放到模块底部） */
+  hide?: Array<'approve' | 'reject' | 'unpublish' | 'reanalyze' | 'edit' | 'ask' | 'history'>;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -143,7 +146,7 @@ export function ReviewActions({
   return (
     <>
       <div className="review-actions">
-        {item.status !== 'approved' && (
+        {!hide.includes('approve') && item.status !== 'approved' && (
           <button
             className="btn btn-primary btn-sm"
             type="button"
@@ -153,7 +156,7 @@ export function ReviewActions({
             通过
           </button>
         )}
-        {item.status !== 'approved' && (
+        {!hide.includes('reject') && item.status !== 'approved' && (
           <button
             className="btn btn-danger btn-sm"
             type="button"
@@ -166,7 +169,7 @@ export function ReviewActions({
             驳回
           </button>
         )}
-        {item.status === 'approved' && (
+        {!hide.includes('unpublish') && item.status === 'approved' && (
           <button
             className="btn btn-sm"
             type="button"
@@ -176,7 +179,7 @@ export function ReviewActions({
             解除通过
           </button>
         )}
-        {item.status !== 'approved' && (
+        {!hide.includes('reanalyze') && item.status !== 'approved' && (
           <button
             className="btn btn-sm"
             type="button"
@@ -186,31 +189,37 @@ export function ReviewActions({
             重新分析
           </button>
         )}
-        <button
-          className="btn btn-sm"
-          type="button"
-          disabled={busy}
-          onClick={() => {
-            setForm(payloadToForm(item.kind, item.payload));
-            setMode('edit');
-          }}
-        >
-          修改
-        </button>
-        <button
-          className="btn btn-ghost btn-sm"
-          type="button"
-          onClick={() => {
-            setQuestion('');
-            setAnswer(null);
-            setMode('ask');
-          }}
-        >
-          追问
-        </button>
-        <button className="btn btn-ghost btn-sm" type="button" onClick={() => void openHistory()}>
-          历史 v{item.currentVersion}
-        </button>
+        {!hide.includes('edit') && (
+          <button
+            className="btn btn-sm"
+            type="button"
+            disabled={busy}
+            onClick={() => {
+              setForm(payloadToForm(item.kind, item.payload));
+              setMode('edit');
+            }}
+          >
+            修改
+          </button>
+        )}
+        {!hide.includes('ask') && (
+          <button
+            className="btn btn-ghost btn-sm"
+            type="button"
+            onClick={() => {
+              setQuestion('');
+              setAnswer(null);
+              setMode('ask');
+            }}
+          >
+            追问
+          </button>
+        )}
+        {!hide.includes('history') && (
+          <button className="btn btn-ghost btn-sm" type="button" onClick={() => void openHistory()}>
+            历史 v{item.currentVersion}
+          </button>
+        )}
       </div>
 
       {error && !mode && (
