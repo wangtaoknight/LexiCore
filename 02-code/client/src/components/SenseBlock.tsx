@@ -26,6 +26,7 @@ function SectionTitle({ title, count }: { title: string; count?: number }) {
 
 export function SenseBlock({
   sense,
+  displayNo,
   items,
   busy,
   sourceEnabled,
@@ -34,6 +35,8 @@ export function SenseBlock({
   onStartSources,
 }: {
   sense: Item;
+  /** 界面重排后的显示编号（1..N），缺省时回退到 payload.senseNo */
+  displayNo?: number;
   items: Item[];
   busy: boolean;
   sourceEnabled: boolean;
@@ -56,7 +59,7 @@ export function SenseBlock({
     <div className="sense-block">
       <ItemCard
         item={sense}
-        title={`${payload.senseNo}. ${payload.cnGloss}`}
+        title={`${displayNo ?? payload.senseNo}. ${payload.cnGloss}`}
         extra={
           <>
             <span className="mono muted small">{payload.pos}</span>

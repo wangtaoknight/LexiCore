@@ -170,7 +170,22 @@ export default function WordDetailPage() {
       return a.seq - b.seq;
     });
   const activeSense = senses.find((item) => item.id === activeSenseId) ?? senses[0] ?? null;
-  const isReviewed = data.stats.total > 0 && data.stats.pending === 0;
+  // 义项「审核完成」= 义项本身及其全部子条目都已通过审核
+  const childrenByParent = new Map<string, WordDetailResponse['items']>();
+  for (const item of data.items) {
+    if (!item.parentId) continue;
+    const list = childrenByParent.get(item.parentId);
+    if (list) list.push(item);
+    else childrenByParent.set(item.parentId, [item]);
+  }
+  const reviewedSenseCount = senses.filter((sense) => {
+    if (sense.status !== 'approved') return false;
+    const children = childrenByParent.get(sense.id) ?? [];
+    return children.every((child) => child.status === 'approved');
+  }).length;
+  const allSensesReviewed = senses.length > 0 && reviewedSenseCount === senses.length;
+  // 界面按频率重排后，编号也随顺序重编（1..N），避免编号跳跃
+  const displayNoById = new Map(senses.map((sense, index) => [sense.id, index + 1]));
   const running = job?.status === 'running';
 
   return (
@@ -201,8 +216,12 @@ export default function WordDetailPage() {
           <div className="word-head">
             <div className="word-head-top">
               <h1 className="word-title serif">{data.word.lemma}</h1>
-              <span className={`review-flag ${isReviewed ? 'is-done' : 'is-pending'}`}>
-                {isReviewed ? '已审核' : '待审核'}
+              <span className={`review-flag ${allSensesReviewed ? 'is-done' : 'is-pending'}`}>
+                {allSensesReviewed
+                  ? '已审核'
+                  : senses.length > 0
+                    ? `待审核 ${reviewedSenseCount}/${senses.length}`
+                    : '待审核'}
               </span>
             </div>
             <div className="word-head-meta">
@@ -267,7 +286,7 @@ export default function WordDetailPage() {
                       className={`sense-tab ${active ? 'active' : ''}`}
                       onClick={() => setActiveSenseId(item.id)}
                     >
-                      <span className="sense-tab-no">{payload.senseNo}</span>
+                      <span className="sense-tab-no">{displayNoById.get(item.id) ?? payload.senseNo}</span>
                       <span className="sense-tab-gloss">{payload.cnGloss}</span>
                       {item.status !== 'approved' && (
                         <span className={`sense-tab-dot status-${item.status}`} aria-hidden="true" />
@@ -283,6 +302,7 @@ export default function WordDetailPage() {
                 <SenseBlock
                   key={activeSense.id}
                   sense={activeSense}
+                  displayNo={displayNoById.get(activeSense.id)}
                   items={data.items}
                   busy={Boolean(running)}
                   sourceEnabled={sourceEnabled}

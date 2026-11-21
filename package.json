@@ -1,8 +1,8 @@
 {
-  "name": "vocabulary-concept-lab-root",
+  "name": "lexicosmos-root",
   "version": "0.1.0",
   "private": true,
-  "description": "仓库根入口：把命令原样转发到 02-code/（代码所在目录），这样在根目录也能直接 npm run dev",
+  "description": "词穹 Lexicosmos 仓库根入口：把命令原样转发到 02-code/（代码所在目录），这样在根目录也能直接 npm run dev",
   "scripts": {
     "dev": "npm --prefix 02-code run dev",
     "dev:server": "npm --prefix 02-code run dev:server",

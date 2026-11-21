@@ -1,8 +1,8 @@
 {
-  "name": "vocabulary-concept-lab",
+  "name": "lexicosmos",
   "version": "0.1.0",
   "private": true,
-  "description": "英语词汇概念研究与审阅系统（本地单用户）",
+  "description": "词穹 Lexicosmos · 单词的星空——以概念理解为核心的英语词汇研究与审阅系统（本地单用户）",
   "scripts": {
     "dev": "concurrently -k -n server,client -c blue,green \"npm:dev:server\" \"npm:dev:client\"",
     "dev:server": "tsx watch server/index.ts",

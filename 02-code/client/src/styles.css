@@ -1674,6 +1674,13 @@ mark.hl {
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  /* 上移，贴近顶部栏，把 main 的 28px 内边距省下来 */
+  margin-top: -20px;
+}
+
+/* 详情页右栏标题行不再需要额外上间距，让面板紧贴顶部 */
+.word-detail-page .section-title-row {
+  margin: 0 0 10px;
 }
 
 .word-layout {

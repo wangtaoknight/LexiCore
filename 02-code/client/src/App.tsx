@@ -16,8 +16,8 @@ export default function App() {
           <Link to="/" className="brand" aria-label="回到首页">
             <span className="brand-mark">词</span>
             <div>
-              <div className="brand-title">单词概念研究台</div>
-              {/* <div className="brand-subtitle">词义 ·  边界</div> */}
+              <div className="brand-title">词穹</div>
+              <div className="brand-subtitle">Lexicosmos · 单词的星空</div>
             </div>
           </Link>
           {isWordDetail && (
