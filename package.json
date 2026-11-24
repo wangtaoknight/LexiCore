@@ -13,6 +13,7 @@
     "start": "npm --prefix 02-code run start",
     "typecheck": "npm --prefix 02-code run typecheck",
     "test": "npm --prefix 02-code run test",
+    "dict:sample": "npm --prefix 02-code run dict:sample --",
     "db:migrate": "npm --prefix 02-code run db:migrate",
     "setup:sqlite": "npm --prefix 02-code run setup:sqlite"
   }

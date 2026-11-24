@@ -14,10 +14,12 @@
     "db:migrate": "tsx server/db/migrate.ts",
     "setup:sqlite": "node scripts/ensure-sqlite-prebuild.js",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "dict:sample": "tsx scripts/collect-evidence.ts"
   },
   "dependencies": {
     "better-sqlite3": "^12.0.0",
+    "cheerio": "^1.0.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "react": "^18.3.1",
