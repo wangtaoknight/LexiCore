@@ -33,6 +33,24 @@ function resolveVocabularyImportFile(): string {
   return candidates.find((file) => fs.existsSync(file)) ?? candidates[0];
 }
 
+/**
+ * 离线词典根目录（MDX/MDD）。
+ * - 可用 `DICT_ROOT` 覆盖（相对路径按当前工作目录解析）
+ * - 默认落在仓库 `04-data/dicts/`（该目录已被 .gitignore 忽略）
+ */
+function resolveDictRoot(): string {
+  const configured = readEnv('DICT_ROOT');
+  if (configured) return path.resolve(PROJECT_ROOT, configured);
+
+  const candidates = [
+    // 从 02-code/ 启动（npm 脚本的默认工作目录）
+    path.resolve(PROJECT_ROOT, '..', '04-data', 'dicts'),
+    // 从仓库根目录启动
+    path.resolve(PROJECT_ROOT, '04-data', 'dicts'),
+  ];
+  return candidates.find((dir) => fs.existsSync(dir)) ?? candidates[0];
+}
+
 export const config = {
   host: readEnv('HOST') || '127.0.0.1',
   port,
@@ -42,6 +60,7 @@ export const config = {
   dataDir: path.resolve(PROJECT_ROOT, 'data'),
   backupDir: path.resolve(PROJECT_ROOT, 'data/backups'),
   vocabularyImportFile: resolveVocabularyImportFile(),
+  dictRoot: resolveDictRoot(),
 };
 
 export type AppConfig = typeof config;

@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { errorHandler, notFoundHandler } from './middleware/error';
 import { dataRouter } from './routes/data';
+import { dictRouter } from './routes/dict';
 import { healthRouter } from './routes/health';
 import { jobsRouter } from './routes/jobs';
 import { reviewsRouter } from './routes/reviews';
@@ -16,6 +17,7 @@ export function createApp(): express.Express {
 
   app.use('/api', healthRouter);
   app.use('/api', settingsRouter);
+  app.use('/api', dictRouter);
   app.use('/api', wordsRouter);
   app.use('/api', reviewsRouter);
   app.use('/api', jobsRouter);

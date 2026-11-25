@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api, errorMessage } from '../api/client';
 import type { Job, WordDetailResponse } from '../api/types';
+import { DictPanel } from '../components/DictPanel';
 import { Modal } from '../components/Modal';
 import { PayloadView } from '../components/PayloadView';
 import { ReviewActions } from '../components/ReviewActions';
@@ -55,6 +56,7 @@ export default function WordDetailPage() {
   const [foldOpen, setFoldOpen] = useState(true);
   const [showTabs, setShowTabs] = useState(false);
   const [confirmApproveAll, setConfirmApproveAll] = useState(false);
+  const [dictWord, setDictWord] = useState<string | null>(null);
   const [approveAllBusy, setApproveAllBusy] = useState(false);
   const [approveAllError, setApproveAllError] = useState<string | null>(null);
 
@@ -259,7 +261,13 @@ export default function WordDetailPage() {
         <aside className="word-side">
           <div className="word-head">
             <div className="word-head-top">
-              <h1 className="word-title serif">{data.word.lemma}</h1>
+              <h1
+                className="word-title serif is-clickable"
+                title="双击查看词典原文"
+                onDoubleClick={() => setDictWord(data.word.lemma)}
+              >
+                {data.word.lemma}
+              </h1>
               <span className={`review-flag ${allSensesReviewed ? 'is-done' : 'is-pending'}`}>
                 {allSensesReviewed
                   ? '已审核'
@@ -552,6 +560,8 @@ export default function WordDetailPage() {
           {approveAllError && <div className="notice notice-error small">{approveAllError}</div>}
         </Modal>
       )}
+
+      {dictWord && <DictPanel word={dictWord} onClose={() => setDictWord(null)} />}
     </div>
   );
 }

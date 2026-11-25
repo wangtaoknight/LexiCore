@@ -7,6 +7,12 @@ import { nowIso } from '../utils/ids';
 
 export type ThinkingMode = 'enabled' | 'disabled';
 
+/** 单词查询页的显示模式：筛选（默认，顶部标签切换）或列表（全部依次堆叠） */
+export type DictViewMode = 'filter' | 'list';
+
+/** 单词查询面板的弹出方式：靠边抽屉（默认）或居中弹窗 */
+export type DictPanelMode = 'drawer' | 'popup';
+
 export type InternalSettings = {
   apiBaseUrl: string;
   apiKey: string | null;
@@ -16,6 +22,10 @@ export type InternalSettings = {
   thinking: ThinkingMode;
   searchBaseUrl: string;
   enableSourceVerification: boolean;
+  dictViewMode: DictViewMode;
+  dictPanelMode: DictPanelMode;
+  /** 词条正文缩放百分比，100 = 基准字号 */
+  dictFontScale: number;
 };
 
 export type PublicSettings = {
@@ -28,6 +38,9 @@ export type PublicSettings = {
   thinking: ThinkingMode;
   searchBaseUrl: string;
   enableSourceVerification: boolean;
+  dictViewMode: DictViewMode;
+  dictPanelMode: DictPanelMode;
+  dictFontScale: number;
   aiMode: 'live' | 'mock';
 };
 
@@ -39,6 +52,9 @@ const DEFAULTS = {
   thinking: 'disabled',
   search_base_url: 'https://api.deepseek.com',
   enable_source_verification: 'false',
+  dict_view_mode: 'filter',
+  dict_panel_mode: 'drawer',
+  dict_font_scale: '100',
 } as const;
 
 export const settingsUpdateSchema = z.object({
@@ -51,6 +67,9 @@ export const settingsUpdateSchema = z.object({
   thinking: z.enum(['enabled', 'disabled']).optional(),
   searchBaseUrl: z.string().trim().url('搜索服务地址必须是合法地址').max(300).optional(),
   enableSourceVerification: z.boolean().optional(),
+  dictViewMode: z.enum(['filter', 'list']).optional(),
+  dictPanelMode: z.enum(['drawer', 'popup']).optional(),
+  dictFontScale: z.number().int().min(100).max(200).optional(),
 });
 
 export type SettingsUpdate = z.infer<typeof settingsUpdateSchema>;
@@ -72,9 +91,29 @@ function writeRaw(key: string, value: string): void {
     .run(key, value, nowIso());
 }
 
+/** 读取任意设置项原始值（供词典启用状态等辅助功能使用） */
+export function getSettingValue(key: string): string | undefined {
+  const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get(key) as
+    | { value: string }
+    | undefined;
+  return row?.value;
+}
+
+/** 写入任意设置项原始值 */
+export function setSettingValue(key: string, value: string): void {
+  writeRaw(key, value);
+}
+
 function toNumber(value: string | undefined, fallback: number): number {
   const parsed = Number(value ?? '');
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+/** 词条字号缩放：限制在 100%–200%，非法值回落到 100% */
+export function clampFontScale(value: string | undefined): number {
+  const parsed = Number(value ?? '');
+  if (!Number.isFinite(parsed)) return 100;
+  return Math.min(200, Math.max(100, Math.round(parsed)));
 }
 
 export function getSettings(): InternalSettings {
@@ -96,6 +135,9 @@ export function getSettings(): InternalSettings {
     thinking: raw.thinking === 'enabled' ? 'enabled' : 'disabled',
     searchBaseUrl: raw.search_base_url || DEFAULTS.search_base_url,
     enableSourceVerification: raw.enable_source_verification === 'true',
+    dictViewMode: raw.dict_view_mode === 'list' ? 'list' : 'filter',
+    dictPanelMode: raw.dict_panel_mode === 'popup' ? 'popup' : 'drawer',
+    dictFontScale: clampFontScale(raw.dict_font_scale),
   };
 }
 
@@ -111,6 +153,9 @@ export function getPublicSettings(): PublicSettings {
     thinking: settings.thinking,
     searchBaseUrl: settings.searchBaseUrl,
     enableSourceVerification: settings.enableSourceVerification,
+    dictViewMode: settings.dictViewMode,
+    dictPanelMode: settings.dictPanelMode,
+    dictFontScale: settings.dictFontScale,
     aiMode: config.aiMode,
   };
 }
@@ -127,6 +172,9 @@ export function updateSettings(input: SettingsUpdate): PublicSettings {
   if (parsed.enableSourceVerification !== undefined) {
     writeRaw('enable_source_verification', String(parsed.enableSourceVerification));
   }
+  if (parsed.dictViewMode !== undefined) writeRaw('dict_view_mode', parsed.dictViewMode);
+  if (parsed.dictPanelMode !== undefined) writeRaw('dict_panel_mode', parsed.dictPanelMode);
+  if (parsed.dictFontScale !== undefined) writeRaw('dict_font_scale', String(parsed.dictFontScale));
 
   if (parsed.clearApiKey) {
     getDb().prepare("DELETE FROM settings WHERE key = 'api_key_enc'").run();

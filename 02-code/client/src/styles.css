@@ -2654,3 +2654,721 @@ a.example-source:hover {
   font-size: 12.6px;
   line-height: 1.55;
 }
+
+/* ---------- 设置页：左目录 / 右面板 ---------- */
+.settings-page {
+  position: relative;
+}
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.settings-toc {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.settings-toc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-soft);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.settings-toc-item:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.settings-toc-item.is-active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.settings-toc-no {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.settings-toc-item.is-active .settings-toc-no {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.settings-toc-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.settings-toc-label {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.settings-toc-meta {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.settings-toc-item.is-active .settings-toc-meta {
+  color: var(--accent-strong);
+}
+
+.settings-panel {
+  min-width: 0;
+}
+
+.settings-panel > .card + .card {
+  margin-top: 16px;
+}
+
+/* 面板标题前的小序号 */
+.section-no {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 11.5px;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
+@media (max-width: 900px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-toc {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .settings-toc-item {
+    width: auto;
+  }
+}
+
+/* ---------- 字典管理：排序与重命名 ---------- */
+.dict-table {
+  width: 100%;
+}
+
+.dict-col-index {
+  width: 74px;
+  white-space: nowrap;
+  cursor: grab;
+}
+
+.dict-col-index:active {
+  cursor: grabbing;
+}
+
+.dict-col-count {
+  width: 112px;
+  white-space: nowrap;
+}
+
+.dict-col-toggle {
+  width: 72px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 只有序号列可以拖动，其余区域保持普通鼠标 */
+.dict-row {
+  cursor: default;
+}
+
+.dict-row.is-dragging {
+  opacity: 0.45;
+}
+
+.dict-row.is-drop-target td {
+  border-top: 2px solid var(--accent);
+}
+
+.dict-grip {
+  margin-right: 6px;
+  color: var(--border-strong);
+  font-size: 13px;
+  letter-spacing: -1px;
+}
+
+.dict-index {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dict-name-input {
+  width: 100%;
+  max-width: 420px;
+  border-color: transparent;
+  background: transparent;
+  font-weight: 600;
+}
+
+.dict-name-input:hover {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.dict-name-input:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+/* 默认只展示名称，右键才进入编辑 */
+.dict-name-text {
+  display: inline-block;
+  max-width: 420px;
+  border-bottom: 1px dashed transparent;
+  font-weight: 600;
+  cursor: context-menu;
+}
+
+.dict-name-text:hover {
+  border-bottom-color: var(--border-strong);
+  color: var(--accent-strong);
+}
+
+.dict-name-input.is-editing {
+  max-width: 420px;
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+/* ---------- 词典查询面板 ---------- */
+.word-title.is-clickable {
+  cursor: pointer;
+}
+
+.word-title.is-clickable:hover {
+  color: var(--accent-strong);
+}
+
+.dict-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(20, 18, 15, 0.34);
+}
+
+/* 弹出式：居中、四周留白 */
+.dict-overlay.is-popup {
+  align-items: center;
+  justify-content: center;
+  padding: 4vh 3vw;
+  background: rgba(20, 18, 15, 0.42);
+}
+
+.dict-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(920px, 94vw);
+  height: 100%;
+  background: var(--surface);
+  box-shadow: -14px 0 36px rgba(0, 0, 0, 0.18);
+  animation: dict-slide-in 0.18s ease;
+}
+
+.dict-panel.is-popup {
+  width: min(1080px, 94vw);
+  height: min(88vh, 980px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  animation: dict-pop-in 0.18s ease;
+}
+
+@keyframes dict-pop-in {
+  from {
+    transform: translateY(12px) scale(0.985);
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes dict-slide-in {
+  from {
+    transform: translateX(28px);
+    opacity: 0.5;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.dict-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dict-panel-meta {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* 顶栏的两个独立功能按钮：左「筛选/列表」右「靠边/弹出」，文字表示点击后的结果 */
+.dict-quick-toggles {
+  display: flex;
+  gap: 6px;
+}
+
+.dict-toggle-btn {
+  padding: 3px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.dict-toggle-btn:hover {
+  border-color: var(--accent);
+  background: var(--surface-soft);
+  color: var(--accent-strong);
+}
+
+/* 主区：左侧内容 + 右侧竖向词典栏 */
+.dict-panel-main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.dict-panel-body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 14px 24px;
+  overflow-y: auto;
+}
+
+/* 固定在右下角的关闭按钮，不随内容滚动 */
+.dict-close-fab {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 3;
+  padding: 7px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.dict-close-fab:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.dict-entry {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.dict-entry + .dict-entry {
+  margin-top: 10px;
+}
+
+.dict-entry-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  font-weight: 650;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dict-entry-head::-webkit-details-marker {
+  display: none;
+}
+
+.dict-entry-head:hover .dict-entry-name {
+  color: var(--accent-strong);
+}
+
+.dict-entry-name {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.dict-entry-no {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dict-entry[open] > .dict-entry-head {
+  border-bottom: 1px solid var(--border);
+}
+
+.dict-frame {
+  display: block;
+  width: 100%;
+  height: 460px;
+  border: none;
+  background: #fff;
+}
+
+/* ---------- 词典简称列 ---------- */
+.dict-col-short {
+  width: 150px;
+}
+
+.dict-short-input {
+  width: 100%;
+  max-width: 150px;
+  border-color: var(--accent);
+  background: var(--surface);
+  font-weight: 500;
+}
+
+/* 简称平时只读展示（未设置时显示「无」），右键词典名称后才进入输入态 */
+.dict-short-text {
+  display: inline-block;
+  max-width: 150px;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.dict-short-text.is-empty {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* ---------- 词典查询面板：筛选模式 ---------- */
+/* 右侧竖向词典栏（带编号） */
+.dict-rail {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 4px;
+  width: min(200px, 42vw);
+  padding: 10px 8px 56px;
+  border-left: 1px solid var(--border);
+  background: var(--surface-soft);
+  overflow-y: auto;
+}
+
+.dict-rail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.dict-rail-item:hover {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--accent-strong);
+}
+
+.dict-rail-item.is-active {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.dict-rail-item.is-miss {
+  color: var(--muted);
+}
+
+.dict-rail-item.is-miss .dict-rail-no {
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  color: var(--muted);
+}
+
+.dict-rail-no {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dict-rail-item.is-active .dict-rail-no {
+  background: var(--accent);
+  color: #fff;
+}
+
+.dict-rail-label {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.dict-panel-body.is-filter {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.dict-filter-view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 词典名称栏：与下方正文明确区分 */
+.dict-filter-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border-bottom: 2px solid var(--border-strong);
+  background: var(--surface-soft);
+  font-size: 13px;
+}
+
+.dict-filter-no {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.dict-filter-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dict-frame.is-filter {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+/* ---------- 显示模式设置 ---------- */
+.mode-options {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.mode-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.mode-option:hover {
+  border-color: var(--accent);
+}
+
+.mode-option.is-active {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.mode-option:disabled {
+  opacity: 0.65;
+  cursor: progress;
+}
+
+.mode-option-dot {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+}
+
+.mode-option.is-active .mode-option-dot {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 3px var(--accent);
+}
+
+.mode-option-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mode-option-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.mode-option-desc {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* 显示模式里的分组与字号滑动条 */
+.mode-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mode-group + .mode-group {
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+}
+
+.mode-group-title {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 560px;
+}
+
+.range {
+  flex: 1;
+  height: 22px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.range-value {
+  min-width: 54px;
+  color: var(--accent-strong);
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+}
+
+.range-scale {
+  display: flex;
+  justify-content: space-between;
+  max-width: 560px;
+  padding-right: 68px;
+  color: var(--muted);
+  font-size: 11.5px;
+}
